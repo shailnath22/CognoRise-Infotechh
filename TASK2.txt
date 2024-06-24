@@ -1,0 +1,53 @@
+# Import necessary libraries
+import pandas as pd
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import StandardScaler
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.metrics import classification_report, confusion_matrix
+from imblearn.over_sampling import SMOTE
+
+# Load the dataset
+
+df = pd.read_csv('/content/creditcard.csv')
+
+# Display first few rows of the dataset
+print(df.head())
+
+# Check for missing values
+print(df.isnull().sum())
+
+# Handle missing values if any (for example, filling NaNs with the median or mode)
+df.fillna(df.median(), inplace=True)
+
+# Separate features and target
+X = df.drop('Class', axis=1)
+y = df['Class']
+
+# Check for missing values in the target variable
+print(y.isnull().sum())
+
+# Handle missing values in the target variable if any
+y.fillna(y.mode()[0], inplace=True)
+
+# Handle class imbalance using SMOTE
+sm = SMOTE(random_state=42)
+X_res, y_res = sm.fit_resample(X, y)
+
+# Split the data into training and testing sets
+X_train, X_test, y_train, y_test = train_test_split(X_res, y_res, test_size=0.2, random_state=42)
+
+# Standardize the features
+scaler = StandardScaler()
+X_train = scaler.fit_transform(X_train)
+X_test = scaler.transform(X_test)
+
+# Train the model
+model = RandomForestClassifier(random_state=42)
+model.fit(X_train, y_train)
+
+# Make predictions
+y_pred = model.predict(X_test)
+
+# Evaluate the model
+print(confusion_matrix(y_test, y_pred))
+print(classification_report(y_test, y_pred))

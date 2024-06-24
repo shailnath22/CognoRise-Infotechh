@@ -1,0 +1,71 @@
+# Import necessary libraries
+import pandas as pd
+import seaborn as sns
+import matplotlib.pyplot as plt
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import StandardScaler
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.metrics import classification_report, confusion_matrix
+from sklearn.impute import SimpleImputer
+
+# Load the dataset
+
+df = pd.read_csv('/content/tested.csv')
+
+# Display first few rows of the dataset
+print(df.head())
+
+# Display column names
+print(df.columns)
+
+# Check for missing values
+print(df.isnull().sum())
+
+# Identify data types of columns
+print(df.dtypes)
+
+# If the dataset contains non-numeric data, inspect those columns
+for col in df.columns:
+    if df[col].dtype == 'object':
+        print(f"Unique values in {col}: {df[col].unique()}")
+
+# If 'species' column is missing, identify the target column and update the variable
+target_column = 'species'  # Update if necessary
+if target_column not in df.columns:
+    print(f"Column '{target_column}' not found in the dataset. Please check the column names.")
+else:
+    # Convert non-numeric data to numeric if necessary
+    for col in df.columns:
+        if df[col].dtype == 'object' and col != target_column:
+            df[col] = df[col].astype('category').cat.codes
+
+    # Handle missing values in the feature matrix
+    imputer = SimpleImputer(strategy='mean')
+    df.iloc[:, :-1] = imputer.fit_transform(df.iloc[:, :-1])
+
+    # Split the data into features and target
+    X = df.drop(target_column, axis=1)
+    y = df[target_column]
+
+    # Split the data into training and testing sets
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+
+    # Standardize the features
+    scaler = StandardScaler()
+    X_train = scaler.fit_transform(X_train)
+    X_test = scaler.transform(X_test)
+
+    # Train the model
+    model = KNeighborsClassifier(n_neighbors=3)
+    model.fit(X_train, y_train)
+
+    # Make predictions
+    y_pred = model.predict(X_test)
+
+    # Evaluate the model
+    print(confusion_matrix(y_test, y_pred))
+    print(classification_report(y_test, y_pred))
+
+    # Visualize the data
+    sns.pairplot(df, hue=target_column)
+    plt.show()
